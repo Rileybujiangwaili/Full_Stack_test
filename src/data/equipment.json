@@ -93,7 +93,7 @@
     "category": "Motor",
     "brand": "US Motors",
     "modelNumber": "5462",
-    "base_cost": 275
+    "baseCost": 275
   },
   {
     "id": "EQ013",
@@ -221,7 +221,7 @@
     "category": "Air Purifier",
     "brand": "Fresh-Aire UV",
     "modelNumber": "TUV-APCO-SI2",
-    "base_cost": 680
+    "baseCost": 680
   },
   {
     "id": "EQ029",
