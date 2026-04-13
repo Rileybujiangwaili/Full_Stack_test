@@ -86,6 +86,7 @@ To handle this, I added a normalization layer so the UI and pricing logic work f
 ```txt
 src/
   App.jsx
+  Main.jsx
   data/
     customers.json
     equipment.json
