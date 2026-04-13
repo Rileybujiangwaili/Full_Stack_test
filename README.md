@@ -1,5 +1,9 @@
 # Field Estimate Tool
 
+## Live Demo
+
+Live prototype: https://tool-fd5i9hse8-rileybujiangwailis-projects.vercel.app
+
 ## Overview
 
 Field Estimate Tool is a technician-facing quoting prototype for HVAC service calls. It helps field technicians build a clean on-site estimate by combining customer/property information, one or more service labor lines, and equipment costs into a single workflow.
@@ -30,6 +34,7 @@ I built a React-based field estimate prototype that allows a technician to:
 - automatically calculate labor subtotal, equipment subtotal, and total estimate
 - copy the estimate summary
 - export the estimate as a PDF for customer sharing
+
 
 ## Key Design Decisions
 
