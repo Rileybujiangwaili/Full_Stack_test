@@ -1,96 +1,3 @@
-export const MAJOR_EQUIPMENT_CATEGORIES = [
-    "Air Conditioner",
-    "Heat Pump",
-    "Furnace",
-    "Air Handler",
-    "Mini-Split",
-    "Rooftop Unit",
-    "Package Unit",
-    "Humidifier",
-    "Air Cleaner",
-    "Air Purifier",
-];
-
-export const SERVICE_EQUIPMENT_MAP = {
-    diagnostic: [
-        "Capacitor",
-        "Motor",
-        "Compressor",
-        "Control Board",
-        "Ignitor",
-        "Coil",
-        "Gas Valve",
-        "Thermostat",
-    ],
-    repair: [
-        "Capacitor",
-        "Motor",
-        "Compressor",
-        "Control Board",
-        "Ignitor",
-        "Coil",
-        "Gas Valve",
-        "Thermostat",
-    ],
-    install: [
-        "Air Conditioner",
-        "Heat Pump",
-        "Furnace",
-        "Air Handler",
-        "Mini-Split",
-        "Rooftop Unit",
-        "Package Unit",
-        "Thermostat",
-        "Humidifier",
-        "Air Cleaner",
-        "Air Purifier",
-    ],
-    maintenance: [
-        "Capacitor",
-        "Motor",
-        "Ignitor",
-        "Thermostat",
-        "Humidifier",
-        "Air Cleaner",
-        "Air Purifier",
-    ],
-    ductwork: ["Humidifier", "Air Cleaner", "Air Purifier"],
-};
-
-export const INSTALL_LEVEL_FILTER = {
-    residential: [
-        "Air Conditioner",
-        "Heat Pump",
-        "Furnace",
-        "Air Handler",
-        "Thermostat",
-        "Humidifier",
-        "Air Cleaner",
-        "Air Purifier",
-    ],
-    commercial: [
-        "Air Conditioner",
-        "Heat Pump",
-        "Rooftop Unit",
-        "Package Unit",
-        "Thermostat",
-        "Air Cleaner",
-        "Air Purifier",
-    ],
-    "mini-split": ["Mini-Split", "Thermostat"],
-};
-
-export function addRetailPricing(equipmentList) {
-    return equipmentList.map((item) => {
-        const markup = MAJOR_EQUIPMENT_CATEGORIES.includes(item.category) ? 1.45 : 2.5;
-
-        return {
-            ...item,
-            retailPrice: Math.round(item.baseCost * markup),
-        };
-    });
-}
-
 export function getServiceTypes(laborRates) {
     return [...new Set(laborRates.map((rate) => rate.jobType))];
 }
@@ -110,43 +17,19 @@ export function getActiveRate(laborRates, selectedType, selectedLevel) {
     );
 }
 
+export function getEquipmentCategories(equipment) {
+    return ["All", ...new Set(equipment.map((item) => item.category))];
+}
+
 export function getRelevantEquipment({
                                          equipment,
-                                         selectedType,
-                                         selectedLevel,
                                          searchQuery,
-                                         customer,
+                                         selectedCategory,
                                      }) {
-    if (!selectedType) return [];
+    let filtered = [...equipment];
 
-    let allowedCategories = SERVICE_EQUIPMENT_MAP[selectedType] ?? [];
-
-    if (
-        selectedType === "install" &&
-        selectedLevel &&
-        INSTALL_LEVEL_FILTER[selectedLevel]
-    ) {
-        allowedCategories = INSTALL_LEVEL_FILTER[selectedLevel];
-    }
-
-    let filtered = equipment.filter((item) =>
-        allowedCategories.includes(item.category)
-    );
-
-    if (customer?.systemType) {
-        const system = customer.systemType.toLowerCase();
-
-        filtered = [...filtered].sort((a, b) => {
-            const aMatch =
-                system.includes(a.category.toLowerCase()) ||
-                a.name.toLowerCase().includes(system);
-
-            const bMatch =
-                system.includes(b.category.toLowerCase()) ||
-                b.name.toLowerCase().includes(system);
-
-            return Number(bMatch) - Number(aMatch);
-        });
+    if (selectedCategory && selectedCategory !== "All") {
+        filtered = filtered.filter((item) => item.category === selectedCategory);
     }
 
     const q = searchQuery.trim().toLowerCase();
@@ -179,18 +62,34 @@ export function calculateEquipmentCost(selectedEquipment, equipmentCatalog) {
     return selectedEquipment.reduce((sum, selected) => {
         const item = equipmentCatalog.find((eq) => eq.id === selected.id);
         if (!item) return sum;
-
-        return sum + item.retailPrice * selected.qty;
+        return sum + item.baseCost * selected.qty;
     }, 0);
 }
 
-export function calculateLaborCost(activeRate, hours) {
-    if (!activeRate || hours == null) return 0;
-    return activeRate.hourlyRate * hours;
+export function calculateServiceLines(serviceLines, laborRates) {
+    return serviceLines.map((line) => {
+        const activeRate = getActiveRate(laborRates, line.type, line.level);
+        const laborCost =
+            activeRate && line.hours != null ? activeRate.hourlyRate * line.hours : 0;
+
+        return {
+            ...line,
+            activeRate,
+            laborCost,
+        };
+    });
 }
 
-export function calculateEstimateTotal({ selectedEquipment, equipmentCatalog, activeRate, hours }) {
-    const laborCost = calculateLaborCost(activeRate, hours);
+export function calculateTotalLabor(serviceLinesWithCosts) {
+    return serviceLinesWithCosts.reduce((sum, line) => sum + line.laborCost, 0);
+}
+
+export function calculateEstimateTotal({
+                                           serviceLinesWithCosts,
+                                           selectedEquipment,
+                                           equipmentCatalog,
+                                       }) {
+    const laborCost = calculateTotalLabor(serviceLinesWithCosts);
     const equipmentCost = calculateEquipmentCost(selectedEquipment, equipmentCatalog);
 
     return {

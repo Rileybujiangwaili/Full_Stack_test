@@ -1,29 +1,103 @@
 # Field Estimate Tool
 
-## The Problem
+## Overview
 
-Our HVAC technicians are losing time on every service call.
+Field Estimate Tool is a technician-facing quoting prototype for HVAC service calls. It helps field technicians build a clean on-site estimate by combining customer/property information, one or more service labor lines, and equipment costs into a single workflow.
 
-Right now, when a tech gets to a job site and needs to give the customer an estimate, here's what happens: they flip through a product binder or scroll through a spreadsheet on their phone, look up equipment costs, try to remember the labor rates for different job types, factor in the specifics of the property, and then scribble numbers on a notepad or punch them into a calculator. Sometimes they call the office to double-check pricing. Sometimes they guess and adjust later.
+The goal of the prototype is to reduce the time technicians spend manually looking up prices, remembering labor rules, and assembling estimates while the customer waits.
 
-The customer is standing there the whole time.
+## Problem
 
-A simple repair estimate might take 10-15 minutes. A full system replacement quote can take 30-45 minutes on-site, and that's before the tech has to go back to their truck to write it up in a way the customer can actually read. Some techs text a photo of their handwritten notes to the office and have someone there type it up. Others just wing it and send a "real" estimate later that evening.
+In the current workflow, HVAC technicians often create estimates manually by:
+- looking through binders or spreadsheets for equipment pricing
+- recalling labor rates from memory
+- writing notes by hand
+- calling the office to confirm pricing
+- sending a more formal estimate later
 
-We've got about 40 technicians in the field. If each one does 4-6 estimates a day, that's a lot of wasted time — and a lot of customers standing around waiting. We've heard from customers that the wait makes the whole experience feel less professional, and we've definitely lost jobs because a competitor got a clean estimate out faster.
+This process is slow, inconsistent, and unprofessional from the customer’s perspective.
 
-## What We Have
+## What I Built
 
-In the `data/` folder, you'll find some of the information our techs work with:
+I built a React-based field estimate prototype that allows a technician to:
 
-- **equipment.json** — Our catalog of HVAC equipment and parts with pricing
-- **labor_rates.json** — What we charge for different types of work
-- **customers.json** — A sample of customer and property records
+- search and select a customer
+- view property and system details
+- add one or more service lines
+- choose service type, level, and estimated hours for each service
+- search and filter equipment from the catalog
+- add equipment quantities to the estimate
+- automatically calculate labor subtotal, equipment subtotal, and total estimate
+- copy the estimate summary
+- export the estimate as a PDF for customer sharing
 
-This is real-ish data pulled from our systems. It's not perfect — some of it was exported from different tools at different times, so it might not all look the same.
+## Key Design Decisions
 
-## What We're Asking
+### 1. Customer-first workflow
+The estimate starts with customer/property selection so technicians can quickly reference:
+- address
+- property type
+- square footage
+- system type
+- system age
+- service history
 
-Build something that helps.
+This reflects how field work typically begins on-site.
 
-Fork this repo, build your solution, and include a short write-up explaining your approach — what you built, why you made the choices you did, and what you'd do differently with more time.
+### 2. Multiple service lines
+A customer may need more than one type of service during a visit, such as:
+- diagnostic + repair
+- maintenance + repair
+- install + ductwork
+
+To reflect that, the prototype supports multiple service lines within a single estimate.
+
+### 3. Equipment kept independent from service type
+The provided data includes:
+- labor rules in `labor_rates.json`
+- equipment catalog entries in `equipment.json`
+
+However, the datasets do not explicitly define which equipment items belong to which service types. To avoid making unsupported assumptions, the prototype allows technicians to select any equipment item regardless of service type.
+
+Service type is used only for labor calculation.
+
+### 4. Use of base cost
+The equipment dataset provides `baseCost`, but does not define markup or customer-facing sale price rules. To stay grounded in the provided data, the prototype currently uses `baseCost` directly in estimate calculations.
+
+In a real production system, markup rules would likely be configurable.
+
+### 5. Data normalization
+The provided JSON files contain inconsistent field names across records. For example:
+- `propertyType` vs `property_type`
+- `squareFootage` vs `sqft`
+- `baseCost` vs `base_cost`
+
+To handle this, I added a normalization layer so the UI and pricing logic work from one consistent internal schema.
+
+## Tech Stack
+
+- React
+- Vite
+- JavaScript
+- html2pdf.js for PDF export
+
+## Project Structure
+
+```txt
+src/
+  App.jsx
+  data/
+    customers.json
+    equipment.json
+    labor_rates.json
+  utils/
+    normalizeData.js
+    estimateCalculator.js
+  components/
+    FieldEstimateTool.jsx
+    CustomerSelector.jsx
+    PropertyDetailsCard.jsx
+    ServiceLineCard.jsx
+    EquipmentSelector.jsx
+    EstimateSummary.jsx
+    EstimateQuoteDocument.jsx 
